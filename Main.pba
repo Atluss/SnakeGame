@@ -1,0 +1,344 @@
+; PROJECT : main
+; AUTHOR  : ATLUS
+; CREATED : 31.03.2012
+; EDITED  : 24.08.2012
+; ---------------------------------------------------------------------
+setfps 60
+LoadFont "Comic Sans MS",2,32,1 
+FontMaskColour 2, RGB(96, 220, 238)
+setfont 2
+
+loadimage "gfx/peac.bmp",1
+loadimage "gfx/head.bmp",2
+loadimage "gfx/wall.bmp",3
+loadimage "gfx/feed.bmp",4
+loadFXimage "gfx/titlescreen.png",5
+loadsound "snd/1.wav",1
+loadsound "snd/2.wav",2
+loadsound "snd/3.wav",3
+	CreateSprite 1
+  	SpriteImage 1,2
+	
+time = timer()
+
+eact=false
+speed=500
+score=0
+record=0
+tile=40
+coun=1
+
+tempx = 0
+tempy = 0
+
+
+n=90
+
+
+for l=2 to n
+	CreateSprite l
+  	SpriteImage l,1
+next l
+
+CreateSprite 99
+SpriteImage 99,4
+
+
+type tail
+	xpos as Integer
+	ypos as Integer
+	fl as Integer
+endtype
+
+
+dim player(n) as tail
+
+direct = 1
+// direct = 1 LEFT
+// direct = 2 RIGHT
+// direct = 3 DOWN
+// direct = 4 UP
+
+player(1).xpos = 640
+player(1).ypos = 280
+player(1).fl = 1
+
+
+
+x=rndrange(1,18)
+x *=40
+y=rndrange(1,13)
+y *=40
+
+
+
+title_screen(5)
+
+	
+do
+cls rgb(160,160,160)
+
+
+
+CurrentXpos=player(1).xpos
+CurrentYpos=player(1).ypos
+
+        ; we don't need the step here FOR loops, loop by positive one by default.    
+for m=5 to 90 
+             ; check if this thing is active 
+if player(m).fl = true
+               ; if so, then check for the match
+		if  ( CurrentXpos=player(m).xpos and  CurrentYpos=player(m).ypos) 
+			eact=true
+			playsound 2
+		endif
+endif
+next m
+
+// draw walls
+for c=0 to 800 step 40
+		drawimage 3,c,0,1
+		drawimage 3,c,560,1
+next c
+
+for c=40 to 520 step 40
+		drawimage 3,0,c,1
+		drawimage 3,760,c,1
+next c
+
+
+
+
+if leftkey() or joyleft(1) and direct<>2 then direct = 1
+if rightkey()or joyright(1)and direct<>1 then direct = 2
+if downkey()or joydown(1) and direct<>4 then direct = 3
+if upkey() or joyup(1) and direct<>3 then direct = 4
+
+if timer()-time >= speed
+	
+if direct = 1
+ 	player(0).xpos=player(1).xpos
+ 	player(0).ypos=player(1).ypos
+ 	score += 5
+	player(1).xpos -= tile
+	playsound 3
+	Copy_Tail_Down(n)
+	time = timer()
+endif
+
+if direct = 2
+ 	player(0).xpos=player(1).xpos
+ 	player(0).ypos=player(1).ypos
+ 	score += 5
+	player(1).xpos += tile
+	playsound 3
+Copy_Tail_Down(n)
+	time = timer()
+endif
+
+if direct = 3
+ 	player(0).xpos=player(1).xpos
+ 	player(0).ypos=player(1).ypos
+ 	score += 5
+	player(1).ypos += tile
+	playsound 3
+Copy_Tail_Down(n)
+	time = timer()
+endif
+
+if direct = 4
+ 	player(0).xpos=player(1).xpos
+ 	player(0).ypos=player(1).ypos
+ 	score += 5
+	player(1).ypos -= tile
+	playsound 3
+Copy_Tail_Down(n)
+	time = timer()
+endif
+endif
+
+// collisoin feed
+if(x=player(1).xpos and y=player(1).ypos)
+		coun++
+		score += 15
+		speed -= 10
+		playsound 1
+		if speed < 70 then speed = 70
+		if coun>=n then coun=n
+		for p=2 to coun
+			player(p).fl = true
+		next p
+		x=rndrange(1,18)
+		x *=40
+		y=rndrange(1,13)
+		y *=40
+endif
+
+
+
+
+
+//drawtail
+for k=2 to coun
+	if player(k).fl = 1
+		positionsprite k,player(k).xpos,player(k).ypos
+		drawsprite k
+endif
+next k
+
+
+positionsprite 1,player(1).xpos,player(1).ypos
+drawsprite 1
+
+positionsprite 99,x,y
+drawsprite 99
+
+
+ink RGB(128, 0, 128)
+text 10,10, "Grow up: " +str$(coun)
+text 200,10, "Record: " +str$(record)
+text 600,10, "Score: " +str$(score)
+
+
+
+if player(1).xpos<30 
+	eact=true 
+	playsound 2
+endif
+if player(1).xpos>730
+	eact=true
+	playsound 2
+endif
+if player(1).ypos<30 
+	eact=true
+	playsound 2
+endif
+if player(1).ypos>530
+	eact=true
+	playsound 2
+endif
+
+if eact=true
+
+eact=false
+speed=500
+
+coun=1
+direct = 1
+player(1).xpos = 640
+player(1).ypos = 280
+player(1).fl = 1
+for h=2 to n
+			player(h).xpos = 0
+			player(h).ypos = 0
+			player(h).fl = false
+next h
+
+
+while spacekey()=false
+	ink RGB(206, 0, 0)
+	text 350,300, "you score:  "+str$(score)
+	text 350,330, "press spacekey to continue"
+	text 350,350, "Press esc to exit"
+	text 350,370, "thank you for play"
+	sync
+endwhile
+score=0
+endif
+if score>record then record = score
+sync
+
+loop
+
+
+Function Copy_Tail_Down(n)
+	for i=2 to n
+		tempx = player(i).xpos
+		tempy = player(i).ypos
+		
+		player(i).xpos = player(0).xpos
+		player(i).ypos = player(0).ypos
+		
+		player(0).xpos = tempx
+		player(0).ypos = tempy
+	next i
+EndFunction
+
+function Title_Screen(TitleScreenIMage)
+
+		Spr=NewSprite(0,0,TitleScreenIMage)		
+		SpriteDrawMode Spr,2
+		
+		Mode=0
+
+      ; Time Fade should take in milliseconds
+		Duration =1000
+		
+      ; when the just effect is to complete and move to the next mode		
+		StartTime=Timer()
+		EndTime=StartTime+Duration
+															
+		do
+
+			CurrentTime=Timer()
+			TimePast=CurrentTime-STartTime			
+
+			Select Mode
+
+					; ---------------------------
+					; FADE IN
+					; ---------------------------
+					case 0
+					
+						if CurrentTime<EndTime
+							Level#=TimePast*(255.0/Duration)
+						else
+						
+							level#=255
+							Mode++
+						endif
+
+					; ---------------------------
+					; Wait for Key press
+					; ---------------------------
+					case 1
+
+						if scancode()<>0 
+							StartTime=CurrentTime
+							EndTime=CurrentTime+Duration
+			 			   Mode =2
+
+						endif
+
+
+					; ---------------------------
+					; FADE OUT
+					; ---------------------------
+					case 2
+					
+						if CurrentTime<EndTime
+							Level#=255.0-(TimePast*(255.0/Duration))
+						else
+							mode++
+						endif
+
+					; ---------------------------
+					; Fade Complete, so exit do loop
+					; ---------------------------
+					case 3
+							exitdo
+			
+			EndSelect
+
+			C=LEvel#
+			c=argb(255,c,c,c)
+			spritetint Spr,C
+			drawsprite spr
+
+			sync
+		loop
+
+		; kill the temp sprite used in the intro
+		deletesprite spr
+
+endfunction
